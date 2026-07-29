@@ -14,6 +14,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  clinicTimeZone: process.env.CLINIC_TIME_ZONE || 'America/Tegucigalpa',
   frontendUrls: (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:5173')
     .split(',')
     .map((url) => url.trim().replace(/\/$/, ''))

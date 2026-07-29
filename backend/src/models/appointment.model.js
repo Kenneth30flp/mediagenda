@@ -1,4 +1,6 @@
 import { query } from '../config/db.js';
+import { env } from '../config/env.js';
+import { isWithinDoctorAvailability } from '../utils/availability.js';
 
 const appointmentSelect = `
   a.id,
@@ -32,11 +34,12 @@ async function assertActiveParticipants(patientId, doctorId) {
   const result = await query(
     `SELECT
        (SELECT is_active FROM patients WHERE id = $1) AS "patientActive",
-       (SELECT is_active FROM doctors WHERE id = $2) AS "doctorActive"`,
+       (SELECT is_active FROM doctors WHERE id = $2) AS "doctorActive",
+       (SELECT availability FROM doctors WHERE id = $2) AS "doctorAvailability"`,
     [patientId, doctorId]
   );
 
-  const { patientActive, doctorActive } = result.rows[0];
+  const { patientActive, doctorActive, doctorAvailability } = result.rows[0];
 
   if (patientActive === null) {
     throw Object.assign(new Error('El paciente seleccionado no existe'), { status: 400 });
@@ -53,10 +56,17 @@ async function assertActiveParticipants(patientId, doctorId) {
   if (!doctorActive) {
     throw Object.assign(new Error('El doctor seleccionado esta desactivado'), { status: 400 });
   }
+
+  return { doctorAvailability };
 }
 
 export async function createAppointment(data) {
-  await assertActiveParticipants(data.patientId, data.doctorId);
+  const { doctorAvailability } = await assertActiveParticipants(data.patientId, data.doctorId);
+  const availabilityCheck = isWithinDoctorAvailability(doctorAvailability, data.appointmentAt, env.clinicTimeZone);
+
+  if (!availabilityCheck.valid) {
+    throw Object.assign(new Error(availabilityCheck.reason), { status: 400 });
+  }
 
   const result = await query(
     `INSERT INTO appointments (patient_id, doctor_id, appointment_at, status)

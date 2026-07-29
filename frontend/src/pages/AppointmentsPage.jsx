@@ -43,6 +43,10 @@ export default function AppointmentsPage() {
     () => doctors.filter((doctor) => !specialty || doctor.specialty === specialty),
     [doctors, specialty]
   );
+  const selectedDoctor = useMemo(
+    () => doctors.find((doctor) => String(doctor.id) === String(form.doctorId)),
+    [doctors, form.doctorId]
+  );
   const visibleAppointments = useMemo(
     () => appointments.filter((appointment) => !statusFilter || appointment.status === statusFilter),
     [appointments, statusFilter]
@@ -145,6 +149,11 @@ export default function AppointmentsPage() {
             {filteredDoctors.length === 0 && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
                 No hay doctores disponibles para esta especialidad.
+              </div>
+            )}
+            {selectedDoctor && (
+              <div className="rounded-2xl border border-[#28A745]/25 bg-[#28A745]/10 px-3 py-2 text-sm font-semibold text-[#1A2B4C]">
+                Horario disponible: <span className="text-[#28A745]">{selectedDoctor.availability}</span>
               </div>
             )}
             <label className="text-sm font-medium text-slate-700">
