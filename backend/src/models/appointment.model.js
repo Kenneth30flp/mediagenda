@@ -25,7 +25,39 @@ export async function listAppointments(user) {
   return result.rows;
 }
 
+// La FK solo garantiza que el registro exista: hay que comprobar aparte que
+// paciente y doctor sigan activos, si no se pueden agendar citas con fichas
+// que ya fueron desactivadas.
+async function assertActiveParticipants(patientId, doctorId) {
+  const result = await query(
+    `SELECT
+       (SELECT is_active FROM patients WHERE id = $1) AS "patientActive",
+       (SELECT is_active FROM doctors WHERE id = $2) AS "doctorActive"`,
+    [patientId, doctorId]
+  );
+
+  const { patientActive, doctorActive } = result.rows[0];
+
+  if (patientActive === null) {
+    throw Object.assign(new Error('El paciente seleccionado no existe'), { status: 400 });
+  }
+
+  if (doctorActive === null) {
+    throw Object.assign(new Error('El doctor seleccionado no existe'), { status: 400 });
+  }
+
+  if (!patientActive) {
+    throw Object.assign(new Error('El paciente seleccionado esta desactivado'), { status: 400 });
+  }
+
+  if (!doctorActive) {
+    throw Object.assign(new Error('El doctor seleccionado esta desactivado'), { status: 400 });
+  }
+}
+
 export async function createAppointment(data) {
+  await assertActiveParticipants(data.patientId, data.doctorId);
+
   const result = await query(
     `INSERT INTO appointments (patient_id, doctor_id, appointment_at, status)
      VALUES ($1, $2, $3, COALESCE($4, 'pending'))

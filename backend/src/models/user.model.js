@@ -59,8 +59,20 @@ export async function updateUserAccess(id, data) {
 }
 
 export async function deactivateUser(id) {
-  const result = await query('UPDATE users SET is_active = false WHERE id = $1 RETURNING id', [id]);
+  const result = await query(
+    'UPDATE users SET is_active = false WHERE id = $1 AND is_active = true RETURNING id',
+    [id]
+  );
   return result.rowCount > 0;
+}
+
+// Evita quedarse sin ningun administrador activo en el sistema.
+export async function countOtherActiveAdmins(excludedId) {
+  const result = await query(
+    "SELECT COUNT(*)::int AS total FROM users WHERE role = 'admin' AND is_active = true AND id <> $1",
+    [excludedId]
+  );
+  return result.rows[0].total;
 }
 
 export async function updateOwnProfile(id, data) {

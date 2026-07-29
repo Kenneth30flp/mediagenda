@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import Alert from '../components/ui/Alert.jsx';
 import { api, getUser, setUser } from '../lib/api.js';
 
 export default function ProfilePage() {
@@ -52,8 +53,8 @@ export default function ProfilePage() {
   return (
     <>
       <PageHeader title="Mi perfil" subtitle="Administra tu informacion personal y credenciales de acceso." />
-      {message && <div className="mb-5 rounded-2xl border border-[#28A745]/25 bg-[#28A745]/10 px-4 py-3 text-sm font-semibold text-[#28A745]">{message}</div>}
-      {error && <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
+      <Alert tone="success" message={message} onClose={() => setMessage('')} />
+      <Alert tone="error" message={error} onClose={() => setError('')} />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
         <form onSubmit={updateProfile} className="card grid gap-4">

@@ -1,12 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api, setSession } from '../lib/api.js';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { api, getToken, setSession } from '../lib/api.js';
+
+// Las credenciales demo solo se autocompletan en desarrollo: en produccion
+// no deben quedar visibles en la pantalla de acceso.
+const isDev = import.meta.env.DEV;
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: 'admin@clinica.com', password: 'Admin123' });
+  const [form, setForm] = useState(isDev ? { email: 'admin@clinica.com', password: 'Admin123' } : { email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (getToken()) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -50,15 +58,15 @@ export default function LoginPage() {
         <div className="mt-6 grid gap-4">
           <label className="text-sm font-medium text-slate-700">
             Correo electronico
-            <input className="input mt-1" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <input className="input mt-1" type="email" required autoComplete="username" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </label>
           <label className="text-sm font-medium text-slate-700">
             Contrasena
-            <input className="input mt-1" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <input className="input mt-1" type="password" required autoComplete="current-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </label>
           <button className="btn-primary w-full" disabled={loading}>{loading ? 'Validando...' : 'Entrar al sistema'}</button>
         </div>
-        <p className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">Usuario demo: admin@clinica.com / Admin123</p>
+        {isDev && <p className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">Usuario demo: admin@clinica.com / Admin123</p>}
       </form>
       </div>
     </div>

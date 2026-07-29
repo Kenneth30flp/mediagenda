@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PageHeader from '../components/ui/PageHeader.jsx';
+import Alert from '../components/ui/Alert.jsx';
 import { api } from '../lib/api.js';
 
 const cards = [
@@ -10,14 +11,18 @@ const cards = [
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState({ totalPatients: 0, activeDoctors: 0, todayAppointments: 0 });
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api('/dashboard/metrics').then(setMetrics).catch(console.error);
+    api('/dashboard/metrics')
+      .then(setMetrics)
+      .catch((err) => setError(err.message));
   }, []);
 
   return (
     <>
       <PageHeader title="Panel ejecutivo" subtitle="Resumen operativo de la clinica con indicadores clave para toma de decisiones." />
+      <Alert tone="error" message={error} onClose={() => setError('')} />
       <section className="mb-6 grid gap-4 md:grid-cols-3">
         {cards.map((card) => (
           <article key={card.key} className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-soft">

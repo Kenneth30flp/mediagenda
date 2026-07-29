@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import { findUserById } from '../models/user.model.js';
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
 
@@ -9,11 +10,34 @@ export function requireAuth(req, res, next) {
     return res.status(401).json({ message: 'Token requerido' });
   }
 
+  let payload;
+
   try {
-    req.user = jwt.verify(token, env.jwtSecret);
-    return next();
+    payload = jwt.verify(token, env.jwtSecret);
   } catch {
     return res.status(401).json({ message: 'Token invalido o expirado' });
+  }
+
+  try {
+    // El token vive 8 horas: sin esta consulta, un empleado desactivado o al que
+    // se le bajaron los permisos seguiria operando con los datos viejos del token.
+    const user = await findUserById(payload.id);
+
+    if (!user) {
+      return res.status(401).json({ message: 'Tu cuenta ya no esta activa. Inicia sesion de nuevo.' });
+    }
+
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      accessLevel: user.accessLevel,
+      doctorId: user.doctorId
+    };
+    return next();
+  } catch (error) {
+    return next(error);
   }
 }
 

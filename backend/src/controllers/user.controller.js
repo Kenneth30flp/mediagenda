@@ -21,6 +21,16 @@ export async function store(req, res, next) {
 
 export async function updateAccess(req, res, next) {
   try {
+    const target = await User.findUserById(req.params.id);
+    if (!target) return res.status(404).json({ message: 'Empleado no encontrado' });
+
+    if (target.role === 'admin' && req.body.role !== 'admin') {
+      const remainingAdmins = await User.countOtherActiveAdmins(req.params.id);
+      if (remainingAdmins === 0) {
+        return res.status(400).json({ message: 'Debe existir al menos un administrador activo' });
+      }
+    }
+
     const user = await User.updateUserAccess(req.params.id, req.body);
     if (!user) return res.status(404).json({ message: 'Empleado no encontrado' });
     return res.json(user);
@@ -33,6 +43,13 @@ export async function destroy(req, res, next) {
   try {
     if (String(req.user.id) === String(req.params.id)) {
       return res.status(400).json({ message: 'No puedes desactivar tu propia cuenta' });
+    }
+
+    const target = await User.findUserById(req.params.id);
+    if (!target) return res.status(404).json({ message: 'Empleado no encontrado' });
+
+    if (target.role === 'admin' && (await User.countOtherActiveAdmins(req.params.id)) === 0) {
+      return res.status(400).json({ message: 'Debe existir al menos un administrador activo' });
     }
 
     const deleted = await User.deactivateUser(req.params.id);

@@ -12,6 +12,7 @@ Recomendado para este proyecto:
 1. Crea una base PostgreSQL en Neon o Supabase.
 2. Copia el `DATABASE_URL`.
 3. Ejecuta el contenido de `database/schema.sql` en el editor SQL de la plataforma.
+4. Ejecuta tambien los archivos de `database/migrations/` en orden numerico.
 
 ## 2. Publicar Backend En Render
 
@@ -25,12 +26,19 @@ Configuracion del servicio:
 Variables de entorno:
 
 ```env
+NODE_ENV=production
 DATABASE_URL=postgresql://...
 JWT_SECRET=un_secreto_largo_y_seguro
 JWT_EXPIRES_IN=8h
 FRONTEND_URL=https://tu-frontend.vercel.app
 FRONTEND_URLS=https://tu-frontend.vercel.app,http://localhost:5173,http://127.0.0.1:5173
 ```
+
+Con `NODE_ENV=production` el servidor exige que `JWT_SECRET` tenga al menos 32
+caracteres y deja de exponer detalles internos en los errores 500.
+
+El TLS hacia la base de datos se activa solo cuando el host no es local. Si tu
+proveedor lo requiere de otra forma, usa `DATABASE_SSL=true` o `DATABASE_SSL=false`.
 
 Cuando Render publique el backend, guarda la URL. Ejemplo:
 
